@@ -25,6 +25,10 @@ class Person(object):
             print(self.name + " hits " + target.name + "!")
             target.hp -= self.st
             print(self.name + " deals " + str(self.st) + " damage.")
+            if target.hp <= 0:
+                target.hp = 0
+                target.alive = False
+                print(target.name + " is knocked out!")
         else:
             print(self.name + " misses " + target.name + ".")
 
@@ -38,6 +42,12 @@ class Person(object):
         print(self.name + " moved to the " + position + ".")
 
     def take_action(self, combatants):
+        if self.faction == "AI":
+            self.take_action_npc(combatants)
+        else:
+            self.take_action_pc(combatants)
+
+    def take_action_pc(self, combatants):
         '''Prompt the player for combat action.
         Takes a list of combatants as an argument.'''
         valid_choice = False
@@ -56,15 +66,20 @@ class Person(object):
                 print("Invalid input.")
         print()
 
+    def take_action_npc(self, combatants):
+        '''NPC always chooses to attack the hero.'''
+        self.attack(hero)
+
 #function definitions-----------------------------------------------------------
 def combat(combatants):
     '''The main combat loop.'''
     t = 0
     while check_pulse(combatants) == True:
         t += 10
-        for i in range(len(combatants)): #BUG: won't stop dead units from acting
+        for i in range(len(combatants)):
             if t % TURN_TIME[combatants[i].ag - 1] == 0:
-                combatants[i].take_action(combatants)
+                if combatants[i].alive == True:
+                    combatants[i].take_action(combatants)
         if t % TURN_TIME[0] == 0:
             t = 0
     else:
@@ -78,9 +93,12 @@ def check_pulse(persons):
         return True
 
 def get_target(combatants):
+    '''The menu for choosing targets.'''
     print("Available targets:")
     for i in range(len(combatants)):
-        print(str(i+1) + ". " + combatants[i].name)
+        print(str(i+1) + ". " + combatants[i].name,end="")
+        print(" (hp: " + str(combatants[i].hp) + "/"
+              + str(combatants[i].hp_max) + ")")
     valid_choice = False
     while valid_choice == False:
         t = input("Enter target #: -> ")
