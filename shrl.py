@@ -67,8 +67,11 @@ class Person(object):
         print()
 
     def take_action_npc(self, combatants):
-        '''NPC always chooses to attack the hero.'''
-        self.attack(hero)
+        '''NPC always chooses to attack the hero, except on first round.'''
+        if self.in_front == False:
+            self.move()
+        else:
+            self.attack(hero)
 
 
 class Area(object):
@@ -83,6 +86,8 @@ def combat(area):
     combatants = [hero]
     for i in area.inhabitants:
         combatants.append(i)
+    for i in combatants:
+        i.in_front = False
     print("As you step into " + area.name + ", you are attacked!")
     while check_pulse(combatants) == True:
         t += 10
