@@ -70,10 +70,20 @@ class Person(object):
         '''NPC always chooses to attack the hero.'''
         self.attack(hero)
 
+
+class Area(object):
+    def __init__(self, inhabitants, name="Dark alley"):
+        self.name = str(name)
+        self.inhabitants = inhabitants
+
 #function definitions-----------------------------------------------------------
-def combat(combatants):
+def combat(area):
     '''The main combat loop.'''
     t = 0
+    combatants = [hero]
+    for i in area.inhabitants:
+        combatants.append(i)
+    print("As you step into " + area.name + ", you are attacked!")
     while check_pulse(combatants) == True:
         t += 10
         for i in range(len(combatants)):
@@ -83,7 +93,9 @@ def combat(combatants):
         if t % TURN_TIME[0] == 0:
             t = 0
     else:
-        print("---GAME OVER---")
+        if hero.alive == True:
+            print("Your opponent finally keels over.")
+            print("You make your way downtown...\n")
 
 def check_pulse(persons):
     '''Returns True if everyone is still alive.'''
@@ -109,8 +121,9 @@ def get_target(combatants):
 
 #main code----------------------------------------------------------------------
 hero = Person(3, 3, 3, "Solar Man", faction="P1")
-bad_guy = Person()
 
-everyone = [hero, bad_guy]
-
-combat(everyone)
+while hero.alive == True:
+    area = Area([Person()])
+    combat(area)
+else:
+    print("You fought bravely...\n\n---GAME OVER---")
