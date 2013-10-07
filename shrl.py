@@ -18,9 +18,16 @@ class Person(object):
         self.player_controlled = player_controlled
         self.in_front = False
         self.alive = True
+        self.defenders = [] #who's defending me
+        self.defending = [] #who am I defending
+        self.ai = {"turns since defend": 0}
 
     def attack(self, target):
         '''Attack an enemy!'''
+        for i in target.defenders:
+            i.counter(self)
+        if self.alive == False:
+            return
         if self.attack_roll(target) > 5:
             print(self.name + " hits " + target.name + "!")
             target.hp -= self.st
@@ -38,6 +45,19 @@ class Person(object):
         if self.in_front == False:
             hit_factor -= 2 #it's harder to hit with melee if you're in the back
         return hit_factor
+    
+    def defend(self, target):
+        '''Prepare to counter any attacks aimed at the target.'''
+        target.defenders.append(self)
+        self.defending.append(target)
+        print(self.name + " is defending " + target.name + "...")
+    
+    def counter(self, target, recipient):
+        '''Return an attack.'''
+        print(self.name + " is countering!")
+        self.attack(target)
+        recipient.defenders.remove(self)
+        self.defending.remove(recipient)
 
     def move(self):
         '''Change battlefield position.'''
@@ -48,6 +68,11 @@ class Person(object):
             position = "back"
         print(self.name + " moved to the " + position + ".")
 
+    def turn_start(self):
+        for i in self.defending:
+            i.defenders.remove(self)
+            self.defending.remove(i)
+    
     def take_action(self, combatants):
         if self.player_controlled == False:
             self.take_action_npc(combatants)
@@ -59,11 +84,16 @@ class Person(object):
         Takes a list of combatants as an argument.'''
         valid_choice = False
         while valid_choice == False:
-            i = input(self.name + "'s turn. [A]ttack or [M]ove? -> ")
+            i = input(self.name + "'s turn. [A]ttack, [D]efend, or [M]ove? -> ")
             if i.lower()[0] == "a":
                 print("Attacking!")
                 target = get_target(combatants)
                 self.attack(target)
+                valid_choice = True
+            elif i.lower()[0] == "d":
+                print("Defending!")
+                target = get_target(combatants)
+                self.defend(target)
                 valid_choice = True
             elif i.lower()[0] == "m":
                 print("Moving!")
@@ -78,7 +108,12 @@ class Person(object):
         if self.in_front == False:
             self.move()
         else:
-            self.attack(hero)
+            if self.ai["turns since defend"] >= 2 and randint(1,5) >= 4:
+                self.defend(self)
+                self.ai["turns since defend"] = 0
+            else:
+                self.attack(hero)
+                self.ai["turns since defend"] += 1
 
 
 class Area(object):
@@ -108,6 +143,7 @@ def combat(area):
         for i in range(len(combatants)):
             if t % TURN_TIME[combatants[i].ag - 1] == 0:
                 if combatants[i].alive == True:
+                    combatants[i].turn_start()
                     combatants[i].take_action(combatants)
         if t % TURN_TIME[0] == 0:
             t = 0
