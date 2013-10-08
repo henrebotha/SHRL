@@ -25,7 +25,7 @@ class Person(object):
     def attack(self, target):
         '''Attack an enemy!'''
         for i in target.defenders:
-            i.counter(self)
+            i.counter(self, target)
         if self.alive == False:
             return
         if self.attack_roll(target) > 5:
